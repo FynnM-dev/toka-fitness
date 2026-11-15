@@ -5,6 +5,9 @@ builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
+var wwwrootPath = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+AppDomain.CurrentDomain.SetData("DataDirectory", wwwrootPath);
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
