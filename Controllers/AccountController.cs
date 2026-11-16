@@ -16,6 +16,10 @@ namespace toka_fitness.Controllers
         {
             return View();
         }
+        public IActionResult Login()
+        {
+            return View();
+        }
         [HttpPost]
         public IActionResult Register(User User)
         {
@@ -73,6 +77,50 @@ namespace toka_fitness.Controllers
                     return View();
                 }
 
+            }
+        }
+        [HttpPost]
+        public IActionResult Login(User User)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    // Pass the user inputs as parameters for security
+                    string query = "SELECT * FROM [User] WHERE Username=@Username AND Password = @Password";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Username", User.Username);
+                        command.Parameters.AddWithValue("@Password", User.Password);
+
+                        connection.Open();
+                        SqlDataReader reader = command.ExecuteReader();
+                        if (reader.Read()) // If the query returns a result
+                        {
+                            ViewBag.SuccessMessage = "Login succsesful!";
+
+                            // Remember who this is for the rest of the session
+                            HttpContext.Session.SetInt32("UserId", (int)reader["UserId"]);
+                            HttpContext.Session.SetString("Username", (string)reader["Username"]);
+                            HttpContext.Session.SetString("IsAdmin", (int)reader["AccountType"] == 3 ? "True" : "False"); // Check if the account is an admin
+
+                            // Direct the user to the home page
+                            return RedirectToAction("Index", "Home");
+                        }
+                        else
+                        {
+                            ViewBag.ErrorMessage = "Incorrect password or username"; // Do not tell the user which one was wrong
+                            return View();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) // Log the exception and tell the user an error has occurred
+            {
+                Console.WriteLine($"An error has occurred {ex.Message}");
+
+                ViewBag.ErrorMessage = "An error has occurred, please try again";
+                return View();
             }
         }
     }
