@@ -1,0 +1,63 @@
+﻿@{
+    ViewData["Title"] = "My Account";
+    var Username = Context.Session.GetString("Username");
+    var AccountType = Context.Session.GetString("IsAdmin");
+}
+
+<h1 class="display-5 mb-3">Welcome back, @Username</h1>
+@if (AccountType == "True")
+{
+    <p class="text-muted">Signed in as admin.</p>
+}
+
+@* Change password section *@
+<div style="max-width: 400px" class="card shadow border-top border-secondary mt-3">
+    <div class="card-body">
+
+        <h3 class="mb-3">Change your password</h3>
+
+        @* Show the user a warning message or a success message if there is one *@
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger mt-3">@TempData["Error"]</div>
+        }
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success mt-3">@TempData["Success"]</div>
+        }
+        @* Change password form *@
+        <form asp-controller="Account" method="post">
+
+            @* Get the user's current password *@
+            <div class="form-group mt-3">
+                <label>Current Password</label>
+                <input class="form-control" name="currentPassword" maxlength="50" />
+                @if (TempData["WrongPassword"] != null)
+                {
+                    <span class="text-danger">@TempData["WrongPassword"]</span>
+                }
+            </div>
+
+            @* Get the user's new password *@
+            <div class="form-group mt-3">
+                <label>New Password</label>
+                <input id="passInput" type="password" name="newPassword" class="form-control" maxlength="50" />
+                @* If the new password is invalid, don't accept and tell the user *@
+                @if (TempData["InvalidPassword"] != null)
+                {
+                    <span class="text-danger">@TempData["InvalidPassword"]</span>
+                }
+            </div>
+
+            @* Checkbox that unhides the password input using JS *@
+            <div class="form-check mt-3">
+                <input class="form-check-input" id="unhidePassCheck" type="checkbox" onclick="unhidePass()" />
+                <label class="form-check-label" for="unhidePassCheck">Show Password</label>
+            </div>
+            <button type="submit" class="btn btn-outline-secondary mt-3 form-group w-50" asp-action="changePassword">Change Password</button>
+
+        </form>
+    </div>
+</div>
+
+<a class="btn btn-warning mt-5" asp-controller="Account" asp-action="Logout">Logout</a>

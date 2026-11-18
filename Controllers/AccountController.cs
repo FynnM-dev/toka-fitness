@@ -18,7 +18,29 @@ namespace toka_fitness.Controllers
         }
         public IActionResult Login()
         {
-            return View();
+            if (HttpContext.Session.GetInt32("UserId") != null) // If the user is already logged in, redirect them to the home page
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            else
+            {
+                ViewBag.UserId = HttpContext.Session.GetInt32("UserId");
+                return View();
+            }
+        }
+        public IActionResult Profile()
+        {
+            if (HttpContext.Session.GetString("Username") == null) // If the user is not logged in, redirect them to the home page
+            {
+                return RedirectToAction("Index", "Home");
+            }
+            else { return View(); }
+
+        }
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login");
         }
         [HttpPost]
         public IActionResult Register(User User)
@@ -123,7 +145,7 @@ namespace toka_fitness.Controllers
                 if (ex.Message.Contains("not supplied"))
                 {
                     ViewBag.ErrorMessage = "Please enter your username and password";
-                return View();
+                    return View();
                 }
 
                 // If the error is something else, show a generic error message
@@ -131,8 +153,82 @@ namespace toka_fitness.Controllers
                 {
                     ViewBag.ErrorMessage = "An error has occurred, please try again or contact support.";
                     return View();
+                }
+            }
+        }
+        [HttpPost]
+        public IActionResult ChangePassword(string newPassword, string currentPassword)
+        {
+            try
+            {
+                int? userId = HttpContext.Session.GetInt32("UserId");
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    // If the user is not logged in, do not let them change password
+                    if (userId == null)
+                    {
+                        return RedirectToAction("Login");
+                    }
+                    // Reject empty current passwords
+                    if (string.IsNullOrEmpty(currentPassword))
+                    {
+                        TempData["WrongPassword"] = "Please enter your current password";
+                        return RedirectToAction("Profile");
+                    }
+                    // Reject empty new passwords
+                    if (string.IsNullOrEmpty(newPassword))
+                    {
+                        TempData["InvalidPassword"] = "Please enter a new password";
+                        return RedirectToAction("Profile");
+                    }
+                    // Reject passwords shorter than 8 characters AND longer than 50 characters
+                    if (newPassword.Length < 8 || newPassword.Length > 50)
+                    {
+                        TempData["InvalidPassword"] = "New password must be between 8-50 characters";
+                        return RedirectToAction("Profile");
+                    }
+
+                    // Check current password is correct
+                    string checkQuery = "SELECT COUNT (*) FROM [User] WHERE UserId=@UserId AND Password=@Password";
+                    using (SqlCommand checkCommand = new SqlCommand(checkQuery, connection))
+                    {
+                        checkCommand.Parameters.AddWithValue("@UserId", userId);
+                        checkCommand.Parameters.AddWithValue("@Password", currentPassword);
+
+                        connection.Open();
+                        // If there are no results with the userid and the inputted password
+                        if ((int)checkCommand.ExecuteScalar() == 0)
+                        {
+                            TempData["WrongPassword"] = "Current password is incorrect.";
+                            return RedirectToAction("Profile");
+                        }
+                    }
+                    // Do not update the password if it is the same as the old one
+                    if (newPassword == currentPassword)
+                    {
+                        TempData["InvalidPassword"] = "New password can not be the same as the current password";
+                        return RedirectToAction("Profile");
+                    }
+                    // Update the user's password after checking everything is valid
+                    string updateQuery = "UPDATE [User] SET Password=@Password WHERE UserId=@UserId";
+                    using (SqlCommand updateCommand = new SqlCommand(updateQuery, connection))
+                    {
+                        updateCommand.Parameters.AddWithValue("@UserId", userId);
+                        updateCommand.Parameters.AddWithValue("@Password", newPassword);
+
+                        updateCommand.ExecuteNonQuery();
+                    }
+                    TempData["Success"] = "Password change successful!";
+                    return RedirectToAction("Profile");
+                }
+            }
+            catch (Exception ex) // Log the exception and tell the user an error has occurred
+            {
+                Console.WriteLine($"An error has occurred, {ex.Message}");
+                TempData["Error"] = "An error has occurred, please try again or contact support";
+                return RedirectToAction("Profile");
+
             }
         }
     }
-}
 }
