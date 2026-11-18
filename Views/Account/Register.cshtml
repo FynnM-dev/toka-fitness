@@ -35,8 +35,14 @@
 
             <div class="form-group mt-3">
                 <label asp-for="Password"></label>
-                <input class="form-control" asp-for="Password" />
+                <input type="password" id="passInput" class="form-control" asp-for="Password" />
                 <span class="text-danger" asp-validation-for="Password"></span>
+            </div>
+
+            @* Checkbox that unhides the password input using JS *@
+            <div class="form-check mt-3">
+                <input class="form-check-input" id="unhidePassCheck" type="checkbox" onclick="unhidePass()" />
+                <label class="form-check-label" for="unhidePassCheck">Show Password</label>
             </div>
 
             <button class="btn btn-primary mt-3 mx-auto" type="submit">Register</button>

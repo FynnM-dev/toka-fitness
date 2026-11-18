@@ -119,9 +119,20 @@ namespace toka_fitness.Controllers
             {
                 Console.WriteLine($"An error has occurred {ex.Message}");
 
-                ViewBag.ErrorMessage = "An error has occurred, please try again";
+                // If the user forgets to enter an input, show an error message
+                if (ex.Message.Contains("not supplied"))
+                {
+                    ViewBag.ErrorMessage = "Please enter your username and password";
                 return View();
+                }
+
+                // If the error is something else, show a generic error message
+                else
+                {
+                    ViewBag.ErrorMessage = "An error has occurred, please try again or contact support.";
+                    return View();
             }
         }
     }
+}
 }

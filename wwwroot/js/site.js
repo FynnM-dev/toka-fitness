@@ -1,4 +1,10 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
-
-// Write your JavaScript code.
+﻿// Hide password checkbox function
+function unhidePass() {
+    var passInput = document.getElementById("passInput");
+    if (passInput.type === "password") {
+        passInput.type = "text";
+    }
+    else {
+            passInput.type = "password";
+    }
+}
